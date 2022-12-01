@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
+#include <stdio.h>
 
 namespace needle {
 namespace cpu {
@@ -44,8 +45,6 @@ void Fill(AlignedArray* out, scalar_t val) {
 }
 
 
-
-
 void Compact(const AlignedArray& a, AlignedArray* out, std::vector<uint32_t> shape,
              std::vector<uint32_t> strides, size_t offset) {
   /**
@@ -63,8 +62,48 @@ void Compact(const AlignedArray& a, AlignedArray* out, std::vector<uint32_t> sha
    *  function will implement here, so we won't repeat this note.)
    */
   /// BEGIN YOUR SOLUTION
-  
-  /// END YOUR SOLUTION
+  assert (shape.size() == strides.size());
+  size_t ndim = shape.size();
+  std::vector<uint32_t> index(ndim, 0);
+  size_t cnt = 0;
+  // printf("size %d\n", out->size);
+  // for(size_t i=0;i<ndim;i++) {
+  //   printf("input shape %d, stride %d\n", shape.at(i), strides.at(i));
+  // }
+  while(true) {
+    // 操作一次
+    size_t cur_offset = offset;
+    // printf("------------------------------");
+    // printf("cnt: %u\n", cnt);
+    for(size_t i=0;i<ndim;i++) {
+      cur_offset += index.at(i) * strides.at(i);
+      // printf("dim %d, index %d, stride %d\n", i, index.at(i), strides.at(i));
+    }
+    // printf("offset %d\n", cur_offset);
+    out->ptr[cnt] = a.ptr[cur_offset];
+    // 更新cnt以及index
+    cnt++;
+    if (cnt >= out->size) {
+      break;
+    }
+    for(size_t j=ndim-1;j>=0;j--) {
+      if (index.at(j) != shape.at(j) - 1) {
+        break;
+      } else {
+        index.pop_back();
+      }
+    }
+    uint32_t last_value = index.back();
+    index.pop_back();
+    index.push_back(last_value + 1);
+    while (index.size() < ndim) {
+      index.push_back(0);
+    }
+    // for(size_t i=0;i<index.size();i++) {
+    //   printf("dim %d, index %d\n", i, index.at(i));
+    // }
+  }
+  // printf("compact process end\n");
 }
 
 void EwiseSetitem(const AlignedArray& a, AlignedArray* out, std::vector<uint32_t> shape,
@@ -79,9 +118,46 @@ void EwiseSetitem(const AlignedArray& a, AlignedArray* out, std::vector<uint32_t
    *   strides: strides of the *out* array (not a, which has compact strides)
    *   offset: offset of the *out* array (not a, which has zero offset, being compact)
    */
-  /// BEGIN YOUR SOLUTION
-  
-  /// END YOUR SOLUTION
+  size_t ndim = shape.size();
+  std::vector<uint32_t> index(ndim, 0);
+  size_t cnt = 0;
+  // printf("size %d\n", out->size);
+  // for(size_t i=0;i<ndim;i++) {
+  //   printf("input shape %d, stride %d\n", shape.at(i), strides.at(i));
+  // }
+  while(true) {
+    // 操作一次
+    size_t cur_offset = offset;
+    // printf("------------------------------");
+    // printf("cnt: %u\n", cnt);
+    for(size_t i=0;i<ndim;i++) {
+      cur_offset += index.at(i) * strides.at(i);
+      // printf("dim %d, index %d, stride %d\n", i, index.at(i), strides.at(i));
+    }
+    // printf("offset %d\n", cur_offset);
+    out->ptr[cur_offset] = a.ptr[cnt];
+    // 更新cnt以及index
+    cnt++;
+    if (cnt >= a.size) {
+      break;
+    }
+    for(size_t j=ndim-1;j>=0;j--) {
+      if (index.at(j) != shape.at(j) - 1) {
+        break;
+      } else {
+        index.pop_back();
+      }
+    }
+    uint32_t last_value = index.back();
+    index.pop_back();
+    index.push_back(last_value + 1);
+    while (index.size() < ndim) {
+      index.push_back(0);
+    }
+    // for(size_t i=0;i<index.size();i++) {
+    //   printf("dim %d, index %d\n", i, index.at(i));
+    // }
+  }
 }
 
 void ScalarSetitem(const size_t size, scalar_t val, AlignedArray* out, std::vector<uint32_t> shape,
@@ -99,10 +175,46 @@ void ScalarSetitem(const size_t size, scalar_t val, AlignedArray* out, std::vect
    *   strides: strides of the out array
    *   offset: offset of the out array
    */
-
-  /// BEGIN YOUR SOLUTION
-  
-  /// END YOUR SOLUTION
+  size_t ndim = shape.size();
+  std::vector<uint32_t> index(ndim, 0);
+  size_t cnt = 0;
+  // printf("size %d\n", out->size);
+  // for(size_t i=0;i<ndim;i++) {
+  //   printf("input shape %d, stride %d\n", shape.at(i), strides.at(i));
+  // }
+  while(true) {
+    // 操作一次
+    size_t cur_offset = offset;
+    // printf("------------------------------");
+    // printf("cnt: %u\n", cnt);
+    for(size_t i=0;i<ndim;i++) {
+      cur_offset += index.at(i) * strides.at(i);
+      // printf("dim %d, index %d, stride %d\n", i, index.at(i), strides.at(i));
+    }
+    // printf("offset %d\n", cur_offset);
+    out->ptr[cur_offset] = val;
+    // 更新cnt以及index
+    cnt++;
+    if (cnt >= size) {
+      break;
+    }
+    for(size_t j=ndim-1;j>=0;j--) {
+      if (index.at(j) != shape.at(j) - 1) {
+        break;
+      } else {
+        index.pop_back();
+      }
+    }
+    uint32_t last_value = index.back();
+    index.pop_back();
+    index.push_back(last_value + 1);
+    while (index.size() < ndim) {
+      index.push_back(0);
+    }
+    // for(size_t i=0;i<index.size();i++) {
+    //   printf("dim %d, index %d\n", i, index.at(i));
+    // }
+  }
 }
 
 void EwiseAdd(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
@@ -143,10 +255,105 @@ void ScalarAdd(const AlignedArray& a, scalar_t val, AlignedArray* out) {
  * functions (however you want to do so, as long as the functions match the proper)
  * signatures above.
  */
+ 
+void EwiseMul(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = a.ptr[i] * b.ptr[i];
+  }
+}
 
-/// BEGIN YOUR SOLUTION
+void EwiseDiv(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = a.ptr[i] / b.ptr[i];
+  }
+}
 
-/// END YOUR SOLUTION
+void EwiseMaximum(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = a.ptr[i] > b.ptr[i] ? a.ptr[i] : b.ptr[i];
+  }
+}
+
+void EwiseEq(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = a.ptr[i] == b.ptr[i] ? 1.0 : 0.0;
+  }
+}
+
+void EwiseGe(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = a.ptr[i] > b.ptr[i] ? 1.0 : 0.0;
+  }
+}
+
+void ScalarMul(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = a.ptr[i] * val;
+  }
+}
+
+
+void ScalarDiv(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = a.ptr[i] / val;
+  }
+}
+
+
+void ScalarPower(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = pow(a.ptr[i], val);
+  }
+}
+
+
+void ScalarMaximum(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = a.ptr[i] > val ? a.ptr[i] : val;
+  }
+}
+
+
+void ScalarEq(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = a.ptr[i] == val ? 1.0 : 0.0;
+  }
+}
+
+
+void ScalarGe(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = a.ptr[i] >= val ? 1.0 : 0.0;
+  }
+}
+
+void EwiseLog(const AlignedArray& a, AlignedArray* out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = log(a.ptr[i]);
+  }
+}
+
+
+void EwiseExp(const AlignedArray& a, AlignedArray* out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = exp(a.ptr[i]);
+  }
+}
+
+
+void EwiseAbs(const AlignedArray& a, AlignedArray* out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = abs(a.ptr[i]);
+  }
+}
+
+
+void EwiseTanh(const AlignedArray& a, AlignedArray* out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = tanh(a.ptr[i]);
+  }
+}
+
 
 void Matmul(const AlignedArray& a, const AlignedArray& b, AlignedArray* out, uint32_t m, uint32_t n,
             uint32_t p) {
@@ -162,10 +369,18 @@ void Matmul(const AlignedArray& a, const AlignedArray& b, AlignedArray* out, uin
    *   n: columns of a / rows of b
    *   p: columns of b / out
    */
-
-  /// BEGIN YOUR SOLUTION
-  
-  /// END YOUR SOLUTION
+  // printf("-----------------------------------\n");
+  // printf("m=%d,n=%d,p=%d\n", m, n, p);
+  for(size_t i=0;i<m;i++) {
+    for(size_t k=0;k<p;k++){
+      scalar_t tmp = 0.0;
+      for(size_t j=0;j<n;j++){
+        tmp += a.ptr[i * n + j] * b.ptr[j * p + k];
+      }
+      out->ptr[i * p + k] = tmp;
+      // printf("i=%d, k=%d, index=%d, value=%f\n",i, k, i * p + k, tmp);
+    }
+  }
 }
 
 inline void AlignedDot(const float* __restrict__ a,
@@ -193,9 +408,15 @@ inline void AlignedDot(const float* __restrict__ a,
   b = (const float*)__builtin_assume_aligned(b, TILE * ELEM_SIZE);
   out = (float*)__builtin_assume_aligned(out, TILE * ELEM_SIZE);
 
-  /// BEGIN YOUR SOLUTION
-  
-  /// END YOUR SOLUTION
+  for(size_t i=0;i<TILE;i++) {
+    for(size_t k=0;k<TILE;k++){
+      float tmp = 0.0;
+      for(size_t j=0;j<TILE;j++){
+        tmp += a[i * TILE + j] * b[j * TILE + k];
+      }
+      out[i * TILE + k] += tmp;
+    }
+  }
 }
 
 void MatmulTiled(const AlignedArray& a, const AlignedArray& b, AlignedArray* out, uint32_t m,
@@ -219,9 +440,18 @@ void MatmulTiled(const AlignedArray& a, const AlignedArray& b, AlignedArray* out
    *   p: columns of b / out
    *
    */
-  /// BEGIN YOUR SOLUTION
-  
-  /// END YOUR SOLUTION
+  for(size_t i=0;i<m/TILE;i++) {
+    for(size_t k=0;k<p/TILE;k++){
+      for(size_t q1=0;q1<TILE;q1++){
+        for(size_t q2=0;q2<TILE;q2++){
+          out->ptr[i * p * TILE + k * TILE * TILE + q1 * TILE + q2] = 0.0;
+        }
+      }
+      for(size_t j=0;j<n/TILE;j++){
+        AlignedDot(&a.ptr[i * n * TILE + j * TILE * TILE], &b.ptr[j * p * TILE + k * TILE * TILE], &out->ptr[i * p * TILE + k * TILE * TILE]);
+      }
+    }
+  }
 }
 
 void ReduceMax(const AlignedArray& a, AlignedArray* out, size_t reduce_size) {
@@ -233,10 +463,15 @@ void ReduceMax(const AlignedArray& a, AlignedArray* out, size_t reduce_size) {
    *   out: compact array to write into
    *   reduce_size: size of the dimension to reduce over
    */
-
-  /// BEGIN YOUR SOLUTION
-  
-  /// END YOUR SOLUTION
+  for(size_t i=0;i<out->size;i++) {
+    scalar_t tmp = a.ptr[i * reduce_size];
+    for(size_t j=1;j< reduce_size;j++){
+      if (a.ptr[i * reduce_size + j] > tmp) {
+        tmp = a.ptr[i * reduce_size + j];
+      }
+    }
+    out->ptr[i] = tmp;
+  }
 }
 
 void ReduceSum(const AlignedArray& a, AlignedArray* out, size_t reduce_size) {
@@ -248,10 +483,13 @@ void ReduceSum(const AlignedArray& a, AlignedArray* out, size_t reduce_size) {
    *   out: compact array to write into
    *   reduce_size: size of the dimension to reduce over
    */
-
-  /// BEGIN YOUR SOLUTION
-  
-  /// END YOUR SOLUTION
+  for(size_t i=0;i<out->size;i++) {
+    scalar_t tmp = 0.0;
+    for(size_t j=0;j< reduce_size;j++){
+      tmp += a.ptr[i * reduce_size + j];
+    }
+    out->ptr[i] = tmp;
+  }
 }
 
 }  // namespace cpu
@@ -292,22 +530,22 @@ PYBIND11_MODULE(ndarray_backend_cpu, m) {
   m.def("ewise_add", EwiseAdd);
   m.def("scalar_add", ScalarAdd);
 
-  // m.def("ewise_mul", EwiseMul);
-  // m.def("scalar_mul", ScalarMul);
-  // m.def("ewise_div", EwiseDiv);
-  // m.def("scalar_div", ScalarDiv);
-  // m.def("scalar_power", ScalarPower);
+  m.def("ewise_mul", EwiseMul);
+  m.def("scalar_mul", ScalarMul);
+  m.def("ewise_div", EwiseDiv);
+  m.def("scalar_div", ScalarDiv);
+  m.def("scalar_power", ScalarPower);
 
-  // m.def("ewise_maximum", EwiseMaximum);
-  // m.def("scalar_maximum", ScalarMaximum);
-  // m.def("ewise_eq", EwiseEq);
-  // m.def("scalar_eq", ScalarEq);
-  // m.def("ewise_ge", EwiseGe);
-  // m.def("scalar_ge", ScalarGe);
+  m.def("ewise_maximum", EwiseMaximum);
+  m.def("scalar_maximum", ScalarMaximum);
+  m.def("ewise_eq", EwiseEq);
+  m.def("scalar_eq", ScalarEq);
+  m.def("ewise_ge", EwiseGe);
+  m.def("scalar_ge", ScalarGe);
 
-  // m.def("ewise_log", EwiseLog);
-  // m.def("ewise_exp", EwiseExp);
-  // m.def("ewise_tanh", EwiseTanh);
+  m.def("ewise_log", EwiseLog);
+  m.def("ewise_exp", EwiseExp);
+  m.def("ewise_tanh", EwiseTanh);
 
   m.def("matmul", Matmul);
   m.def("matmul_tiled", MatmulTiled);

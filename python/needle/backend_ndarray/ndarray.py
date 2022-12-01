@@ -240,9 +240,11 @@ class NDArray:
             NDArray : reshaped array; this will point to the same memory as the original NDArray.
         """
         assert prod(self.shape) == prod(new_shape)
-        self._shape = tuple(new_shape)
-        self._strides = self.compact_strides(self._shape)
-        return self
+        shape = tuple(new_shape)
+        strides = self.compact_strides(shape)
+        return NDArray.make(
+            shape, strides=strides, device=self.device, handle=self._handle
+        )
 
     def permute(self, new_axes):
         """
@@ -262,12 +264,12 @@ class NDArray:
             to the same memory as the original NDArray (i.e., just shape and
             strides changed).
         """
-        new_shape = [self.shape[i] for i in new_axes]
-        self.reshape(new_shape)
-        return self
-        # ### BEGIN YOUR SOLUTION
-        # raise NotImplementedError()
-        # ### END YOUR SOLUTION
+        shape = tuple([self.shape[i] for i in new_axes])
+        strides = tuple([self._strides[i] for i in new_axes])
+        return NDArray.make(
+            shape, strides=strides, device=self.device, handle=self._handle
+        )
+
 
     def broadcast_to(self, new_shape):
         """
@@ -285,14 +287,21 @@ class NDArray:
             NDArray: the new NDArray object with the new broadcast shape; should
             point to the same memory as the original array.
         """
-        # for i, v in self.shape:
-        #     assert v == new_
-        # ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
-        # ### END YOUR SOLUTION
+        strides = []
+        for raw_dim, new_dim, stride in zip(self.shape, new_shape, self._strides):
+            if raw_dim != 1:
+                assert raw_dim == new_dim, "broadcast only allow for dims which size=1"
+                strides.append(stride)
+            else:
+                strides.append(0)
+                
+        shape = tuple(new_shape)
+        strides = tuple(strides)
+        return NDArray.make(
+            shape, strides=strides, device=self.device, handle=self._handle
+        )
 
     ### Get and set elements
-
     def process_slice(self, sl, dim):
         """ Convert a slice to an explicit start/stop/step """
         start, stop, step = sl.start, sl.stop, sl.step
@@ -349,10 +358,12 @@ class NDArray:
             ]
         )
         assert len(idxs) == self.ndim, "Need indexes equal to number of dimensions"
-
-        ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
-        ### END YOUR SOLUTION
+        shape = tuple([math.ceil((w.stop - w.start) / w.step) for w in idxs])
+        strides = tuple([w.step * t for w, t in zip(idxs, self._strides)])
+        offset = sum(w.start * t for w, t in zip(idxs, self._strides))
+        return NDArray.make(
+            shape, strides=strides, device=self.device, handle=self._handle, offset=offset
+        )
 
     def __setitem__(self, idxs, other):
         """Set the values of a view into an array, using the same semantics
@@ -485,7 +496,7 @@ class NDArray:
         assert self.shape[1] == other.shape[0]
 
         m, n, p = self.shape[0], self.shape[1], other.shape[1]
-
+        # print(f"python m={m}, n={n}, p={p}")
         # if the matrix is aligned, use tiled matrix multiplication
         if hasattr(self.device, "matmul_tiled") and all(
             d % self.device.__tile_size__ == 0 for d in (m, n, p)
@@ -533,7 +544,10 @@ class NDArray:
         return view, out
 
     def sum(self, axis=None):
+        # print("raw shape: ", self.shape, " axis: ", axis)
         view, out = self.reduce_view_out(axis)
+        # print("reduce_sum view shape: ", view.shape)
+        # print("reduce_sum out shape: ", out.shape)
         self.device.reduce_sum(view.compact()._handle, out._handle, view.shape[-1])
         return out
 

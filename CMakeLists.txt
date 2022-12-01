@@ -16,10 +16,10 @@ find_package(pybind11 PATHS ${__pybind_path})
 
 
 if(NOT MSVC)
-  set(CMAKE_CXX_FLAGS "-std=c++11 -O2 -march=native ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS "-std=c++11 -march=native ${CMAKE_CXX_FLAGS}")
   set(CMAKE_CUDA_STANDARD 14)
 else()
-  set(CMAKE_CXX_FLAGS "/std:c++11 -O2 -march=native ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS "/std:c++11 -march=native ${CMAKE_CXX_FLAGS}")
   set(CMAKE_CUDA_STANDARD 14)
 endif()
 
@@ -33,14 +33,14 @@ list(APPEND LINKER_LIBS ${pybind11_LIBRARIES})
 add_library(ndarray_backend_cpu MODULE src/ndarray_backend_cpu.cc)
 target_link_libraries(ndarray_backend_cpu PUBLIC ${LINKER_LIBS})
 pybind11_extension(ndarray_backend_cpu)
-pybind11_strip(ndarray_backend_cpu)
+# pybind11_strip(ndarray_backend_cpu)
 
 
 # directly output to ffi folder
 set_target_properties(ndarray_backend_cpu
   PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/needle/backend_ndarray
-  CXX_VISIBILITY_PRESET "hidden"
+  # CXX_VISIBILITY_PRESET "hidden"
 )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -73,14 +73,14 @@ if(CUDA_FOUND)
 
   target_link_libraries(ndarray_backend_cuda ${LINKER_LIBS})
   pybind11_extension(ndarray_backend_cuda)
-  pybind11_strip(ndarray_backend_cuda)
+  # pybind11_strip(ndarray_backend_cuda)
 
   # directly output to ffi folder
   set_target_properties(ndarray_backend_cuda
     PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/needle/backend_ndarray
-    CXX_VISIBILITY_PRESET "hidden"
-    CUDA_VISIBILITY_PRESET "hidden"
+    # CXX_VISIBILITY_PRESET "hidden"
+    # CUDA_VISIBILITY_PRESET "hidden"
 )
 
 endif()

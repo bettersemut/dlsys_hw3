@@ -76,9 +76,11 @@ def test_compact(params, device):
 
 reduce_params = [
     {"dims": (10,), "axis": 0},
+    {"dims": (3, 5), "axis": 0},
+    {"dims": (3, 5), "axis": 1},
     {"dims": (4, 5, 6), "axis": 0},
     {"dims": (4, 5, 6), "axis": 1},
-    {"dims": (4, 5, 6), "axis": 2}
+    {"dims": (4, 5, 6), "axis": 2},
 ]
 @pytest.mark.parametrize("device", _DEVICES, ids=["cpu", "cuda"])
 @pytest.mark.parametrize("params", reduce_params)
@@ -86,6 +88,7 @@ def test_reduce_sum(params, device):
     dims, axis = params['dims'], params['axis']
     _A = np.random.randn(*dims)
     A = nd.array(_A, device=device)   
+    # print("\ndata ", _A)
     np.testing.assert_allclose(_A.sum(axis=axis, keepdims=True), A.sum(axis=axis).numpy(), atol=1e-5, rtol=1e-5)
 
 
@@ -246,6 +249,8 @@ def test_reshape(device, params):
     A = nd.array(_A, device=device)
     lhs = _A.reshape(*new_shape)
     rhs = A.reshape(new_shape)
+    print("ndarray shape: ", new_shape)
+    print("ndarray strides: ", rhs.strides)
     np.testing.assert_allclose(lhs, rhs.numpy(), atol=1e-5, rtol=1e-5)
     compare_strides(lhs, rhs)
     check_same_memory(A, rhs)
@@ -264,8 +269,12 @@ def test_getitem(device, params):
     fn = params['fn']
     _A = np.random.randn(5, 5)
     A = nd.array(_A, device=device)
+    print("numpy", _A)
+    print("ndarray", A)
     lhs = fn(_A)
     rhs = fn(A)
+    print("numpy res", lhs, lhs.strides)
+    print("ndarray res", rhs, rhs.strides)
     np.testing.assert_allclose(lhs, rhs.numpy(), atol=1e-5, rtol=1e-5)
     compare_strides(lhs, rhs)
     check_same_memory(A, rhs)
@@ -287,8 +296,10 @@ def test_broadcast_to(device, params):
     check_same_memory(A, rhs)
 
 
-matmul_dims = [(16, 16, 16), 
-    (8, 8, 8), 
+matmul_dims = [
+    (4, 4, 4),
+    (8, 8, 8),
+    (16, 16, 16), 
     (1, 2, 3), 
     (3, 4, 5), 
     (5, 4, 3), 
@@ -296,7 +307,8 @@ matmul_dims = [(16, 16, 16),
     (72, 72, 72), 
     (72, 73, 74), 
     (74, 73, 72), 
-    (128, 128, 128)]
+    (128, 128, 128),
+]
 @pytest.mark.parametrize("device", _DEVICES, ids=["cpu", "cuda"])
 @pytest.mark.parametrize("m,n,p", matmul_dims)
 def test_matmul(m, n, p, device):
@@ -304,6 +316,8 @@ def test_matmul(m, n, p, device):
     _B = np.random.randn(n, p)
     A = nd.array(_A, device=device)
     B = nd.array(_B, device=device)
+    # print("A", _A)
+    # print("B", _B)
     np.testing.assert_allclose((A @ B).numpy(), _A @ _B, rtol=1e-5, atol=1e-5)
 
 
